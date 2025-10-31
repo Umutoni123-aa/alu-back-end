@@ -1,43 +1,31 @@
 #!/usr/bin/python3
+"""Module"""
 
-import sys
 import requests
+import sys
 
 
-def main():
-    if len(sys.argv) != 2:
-        return
-
-    try:
-        user_id = int(sys.argv[1])
-    except ValueError:
-        return
-
-    user_url = 'https://jsonplaceholder.typicode.com/users/{}'.format(user_id)
-    todos_url = 'https://jsonplaceholder.typicode.com/todos'
-
-    # get username
-    user_resp = requests.get(user_url)
-    if user_resp.status_code != 200:
-        return
-    user = user_resp.json()
-    username = user.get('name')
-
-    # get todos for this user
-    params = {'userId': user_id}
-    todos_resp = requests.get(todos_url, params=params)
-    if todos_resp.status_code != 200:
-        return
-    todos = todos_resp.json()
-
-    total = len(todos)
-    done_tasks = [t for t in todos if t.get('completed') is True]
-    done_count = len(done_tasks)
-
-    print('Employee {} is done with tasks({}/{}):'.format(username, done_count, total))
-    for t in done_tasks:
-        print('\t {}'.format(t.get('title')))
-
+"""Module"""
 
 if __name__ == '__main__':
-    main()
+user_id = sys.argv[1]
+user_url = "https://jsonplaceholder.typicode.com/users/{}" \
+.format(user_id)
+todos_url = "https://jsonplaceholder.typicode.com/users/{}/todos/" \
+.format(user_id)
+
+user_info = requests.request('GET', user_url).json()
+todos_info = requests.request('GET', todos_url).json()
+
+employee_name = user_info["name"]
+task_completed = list(filter(lambda obj:
+(obj["completed"] is True), todos_info))
+number_of_done_tasks = len(task_completed)
+total_number_of_tasks = len(todos_info)
+
+print("Employee {} is done with tasks({}/{}):".
+format(employee_name, number_of_done_tasks, total_number_of_tasks))
+
+[print("\t " + task["title"]) for task in task_completed]
+
+

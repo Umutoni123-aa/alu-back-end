@@ -1,37 +1,43 @@
 #!/usr/bin/python3
+"""Module"""
 
 import json
 import requests
 
 
-def main():
-    users_url = 'https://jsonplaceholder.typicode.com/users'
-    todos_url = 'https://jsonplaceholder.typicode.com/todos'
+def get_employee_task(employee_id):
+    """Doc"""
+    user_url = "https://jsonplaceholder.typicode.com/users/{}" \
+        .format(employee_id)
 
-    users_resp = requests.get(users_url)
-    todos_resp = requests.get(todos_url)
-    if users_resp.status_code != 200 or todos_resp.status_code != 200:
-        return
+    user_info = requests.request('GET', user_url).json()
 
-    users = users_resp.json()
-    todos = todos_resp.json()
+    employee_username = user_info["username"]
+    todos_url = "https://jsonplaceholder.typicode.com/users/{}/todos/" \
+        .format(employee_id)
+    todos_info = requests.request('GET', todos_url).json()
+    return [
+        dict(zip(["task", "completed", "username"],
+                 [task["title"], task["completed"], employee_username]))
+        for task in todos_info]
 
-    # build a map userId -> username
-    user_map = {u.get('id'): u.get('username') for u in users}
 
-    result = {}
-    for t in todos:
-        uid = t.get('userId')
-        entry = {
-            'username': user_map.get(uid),
-            'task': t.get('title'),
-            'completed': t.get('completed')
-        }
-        result.setdefault(str(uid), []).append(entry)
+def get_employee_ids():
+    """Doc"""
+    users_url = "https://jsonplaceholder.typicode.com/users/"
 
-    with open('todo_all_employees.json', 'w') as f:
-        json.dump(result, f)
+    users_info = requests.request('GET', users_url).json()
+    ids = list(map(lambda user: user["id"], users_info))
+    return ids
 
 
 if __name__ == '__main__':
-    main()
+
+    employee_ids = get_employee_ids()
+
+    with open('todo_all_employees.json', "w") as file:
+        all_users = {}
+        for employee_id in employee_ids:
+            all_users[str(employee_id)] = get_employee_task(employee_id)
+        file.write(json.dumps(all_users))
+
